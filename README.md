@@ -17,34 +17,39 @@ uv sync
 
 ## Usage
 
+The command accepts one positional argument, either a URL or a local file path.
+If standard input is piped, it reads raw HTML from stdin first, even if a
+positional argument or `SCRAPE_URL` is also present. Otherwise, it uses the
+positional argument if provided, then falls back to the `SCRAPE_URL` environment
+variable, which must be an HTTP(S) URL.
+
 Fetch a page from a URL:
 
 ```sh
-uv run extract-jsonld --url https://example.com/jobs/123
+uv run extract-jsonld https://example.com/jobs/123
 ```
 
 Read a local HTML file:
 
 ```sh
-uv run extract-jsonld --path ./page.html
+uv run extract-jsonld ./page.html
 ```
 
-Read HTML from standard input, either by piping it or using `-` as the path:
+Read HTML from standard input:
 
 ```sh
 cat page.html | uv run extract-jsonld
-uv run extract-jsonld --path - < page.html
+```
+
+Fetch the URL from the environment:
+
+```sh
+SCRAPE_URL=https://example.com/jobs/123 uv run extract-jsonld
 ```
 
 The command prints a JSON array to standard output. Each array element
 corresponds to a matching JSON-LD script. A script with invalid or empty JSON
 produces `null` in the output and is not saved as an extracted payload.
-
-Use `--help` to see the available options:
-
-```sh
-uv run extract-jsonld --help
-```
 
 ## Stored data
 

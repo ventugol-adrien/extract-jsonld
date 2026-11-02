@@ -1,49 +1,51 @@
 from argparse import ArgumentParser
 import json
+import os
 from pathlib import Path
 import sys
+from urllib.parse import urlparse
 
 from extract_jsonld.db import save_page_and_tags
-from extract_jsonld.models import JobPosting
 from extract_jsonld.services import fetch_html, extract_tags
 
 
-def select_platform(data: dict, url: str) -> str:
-    match url:
-        case _ if "ashby" in url:
-            return "ashby"
-        case _:
-            return "unknown"
+def _is_url(source: str) -> bool:
+    parsed = urlparse(source)
+    return parsed.scheme in {"http", "https"} and bool(parsed.netloc)
 
 
 def main():
     parser = ArgumentParser(description="Extract JSON-LD from web pages")
     parser.add_argument(
-        "-p", "--path", help="File path of the web page to extract JSON-LD from"
-    )
-    parser.add_argument(
-        "-u", "--url", help="URL of the web page to extract JSON-LD from"
+        "source",
+        nargs="?",
+        help="file path or http(s) URL; overrides SCRAPE_URL unless stdin is piped",
     )
     args = parser.parse_args()
-    raw_html = ""
-    if args.path == "-":
-        raw_html = sys.stdin.read()
-        source_url = "stdin:"
-    elif args.path:
-        # print(f"Extracting JSON-LD from file path: {args.path}")
-        source_path = Path(args.path)
-        raw_html = source_path.read_text()
-        source_url = source_path.resolve().as_uri()
 
-    elif args.url:
-        # print(f"Extracting JSON-LD from URL: {args.url}")
-        raw_html = fetch_html(args.url)
-        source_url = args.url
-    elif not sys.stdin.isatty():
+    if not sys.stdin.isatty():
         raw_html = sys.stdin.read()
         source_url = "stdin:"
     else:
-        parser.error("provide a path or URL, or pipe HTML through stdin")
+        source = (
+            args.source
+            if args.source is not None
+            else os.environ.get("SCRAPE_URL")
+        )
+        if not source:
+            parser.error(
+                "provide a path or URL, set SCRAPE_URL, or pipe HTML through stdin"
+            )
+        if args.source is None and not _is_url(source):
+            parser.error("SCRAPE_URL must be an http(s) URL")
+
+        if _is_url(source):
+            raw_html = fetch_html(source)
+            source_url = source
+        else:
+            source_path = Path(source)
+            raw_html = source_path.read_text()
+            source_url = source_path.resolve().as_uri()
 
     extracted_data = extract_tags(raw_html, "script")
     save_page_and_tags(source_url, raw_html, extracted_data)
