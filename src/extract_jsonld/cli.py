@@ -23,8 +23,8 @@ def main():
     )
     args = parser.parse_args()
 
-    if not sys.stdin.isatty():
-        raw_html = sys.stdin.read()
+    raw_html = sys.stdin.read() if not sys.stdin.isatty() else ""
+    if raw_html.strip():
         source_url = "stdin:"
     else:
         source = (

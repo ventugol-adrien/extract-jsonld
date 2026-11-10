@@ -18,10 +18,10 @@ uv sync
 ## Usage
 
 The command accepts one positional argument, either a URL or a local file path.
-If standard input is piped, it reads raw HTML from stdin first, even if a
-positional argument or `SCRAPE_URL` is also present. Otherwise, it uses the
-positional argument if provided, then falls back to the `SCRAPE_URL` environment
-variable, which must be an HTTP(S) URL.
+If non-empty standard input is piped, it reads raw HTML from stdin first, even
+if a positional argument or `SCRAPE_URL` is also present. Otherwise, it uses
+the positional argument if provided, then falls back to the `SCRAPE_URL`
+environment variable, which must be an HTTP(S) URL.
 
 Fetch a page from a URL:
 
